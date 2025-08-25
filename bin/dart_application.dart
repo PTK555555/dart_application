@@ -16,11 +16,17 @@ void main() async {
   );
 
   if (loginRes.statusCode == 200) {
-    print("Login success\n");
+    final loginData = jsonDecode(loginRes.body);
+    final userId = loginData['id'];
+    final username = loginData['username'];
+
+    // print header and welcome only once
+    print("\n=========== Expense Tracking App =========");
+    print("Welcome $username\n");
 
     while (true) {
-      print("========= Expense Tracking App =========");
-      print("1. Show all");
+      // just the menu here
+      print("1. All expenses");
       print("2. Today's expense");
       print("3. Search expense");
       print("4. Add new expense");
@@ -74,7 +80,7 @@ void main() async {
         final res = await http.post(
           Uri.parse("http://localhost:3000/expenses"),
           headers: {"Content-Type": "application/json"},
-          body: jsonEncode({"item": item, "paid": paid}),
+          body: jsonEncode({"user_id": userId, "item": item, "paid": paid}),
         );
 
         if (res.statusCode == 200) {
