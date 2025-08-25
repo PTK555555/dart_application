@@ -30,16 +30,80 @@ void main() async {
       String? choice = stdin.readLineSync();
 
       if (choice == "1") {
+        // Show all
         var res = await http.get(Uri.parse("http://localhost:3000/expenses"));
         var expenses = jsonDecode(res.body);
         showExpenses(expenses);
       } else if (choice == "2") {
+        // Today's expense
         var res = await http.get(
           Uri.parse("http://localhost:3000/expenses/today"),
         );
         var expenses = jsonDecode(res.body);
         showExpenses(expenses);
+      } else if (choice == "3") {
+        // Search expense
+        stdout.write("Item to search: ");
+        final keyword = stdin.readLineSync()?.trim() ?? '';
+
+        final uri = Uri.parse(
+          "http://localhost:3000/expenses/search?q=${Uri.encodeQueryComponent(keyword)}",
+        );
+
+        final res = await http.get(uri);
+
+        if (res.statusCode != 200) {
+          print("Search failed: ${res.body}\n");
+        } else {
+          final List<dynamic> expenses = jsonDecode(res.body);
+          if (expenses.isEmpty) {
+            print("No item: $keyword\n");
+          } else {
+            showExpenses(expenses);
+          }
+        }
+      } else if (choice == "4") {
+        // Add new expense
+        print("===== Add new item =====");
+        stdout.write("Item: ");
+        final item = stdin.readLineSync()?.trim() ?? '';
+        stdout.write("Paid: ");
+        final paidStr = stdin.readLineSync()?.trim() ?? '0';
+        final paid = int.tryParse(paidStr) ?? 0;
+
+        final res = await http.post(
+          Uri.parse("http://localhost:3000/expenses"),
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode({"item": item, "paid": paid}),
+        );
+
+        if (res.statusCode == 200) {
+          print("Inserted!\n");
+        } else {
+          print("Failed to insert: ${res.body}\n");
+        }
+      } else if (choice == "5") {
+        // Delete an expense
+        print("===== Delete an item =====");
+        stdout.write("Item id: ");
+        final idStr = stdin.readLineSync()?.trim() ?? '';
+        final id = int.tryParse(idStr);
+
+        if (id == null) {
+          print("Invalid id\n");
+        } else {
+          final res = await http.delete(
+            Uri.parse("http://localhost:3000/expenses/$id"),
+          );
+
+          if (res.statusCode == 200) {
+            print("Deleted!\n");
+          } else {
+            print("Failed to delete: ${res.body}\n");
+          }
+        }
       } else if (choice == "6") {
+        // Exit
         print("----- Bye -------");
         break;
       } else {
